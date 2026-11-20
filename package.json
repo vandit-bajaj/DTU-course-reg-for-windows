@@ -29,10 +29,17 @@
     "directories": {
       "output": "dist"
     },
-    "files": ["**/*"],
+    "files": ["**/*", "!dist/**"],
     "win": {
       "target": ["nsis", "zip"],
       "icon": "assets/dtulogo.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "DTU Course Registrar"
     },
     "mac": {
       "target": [{ "target": "dmg", "arch": ["arm64"] }, { "target": "zip", "arch": ["arm64"] }],

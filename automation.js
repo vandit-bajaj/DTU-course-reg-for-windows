@@ -76,6 +76,12 @@ async function automateLogin({r,p}, targetHost = 'exam-setu.dtu.ac.in') {
       password: p,
     });
 
+    const isWin = process.platform === 'win32';
+    const platformHeader = isWin ? '"Windows"' : '"macOS"';
+    const userAgent = isWin
+      ? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+      : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+
     response = await got(`https://${targetHost}/student/login`, {
       method: 'POST',
       body: credentials,
@@ -84,12 +90,12 @@ async function automateLogin({r,p}, targetHost = 'exam-setu.dtu.ac.in') {
         "Cache-Control": "max-age=0",
         "Sec-Ch-Ua": '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
         "Sec-Ch-Ua-Mobile": "?0",
-        "Sec-Ch-Ua-Platform": '"macOS"',
+        "Sec-Ch-Ua-Platform": platformHeader,
         "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8",
         "Origin": `https://${targetHost}`,
         "Content-Type": "application/x-www-form-urlencoded",
         "Upgrade-Insecure-Requests": "1",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        "User-Agent": userAgent,
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
         "Sec-Fetch-Site": "same-origin",
         "Sec-Fetch-Mode": "navigate",
@@ -531,14 +537,20 @@ const handlerLogic = async (session, targetHost = 'exam-setu.dtu.ac.in', tracked
 
 // Utility Function to Get Common Headers
 function getCommonHeaders(host = 'exam-setu.dtu.ac.in') {
+  const isWin = process.platform === 'win32';
+  const platformHeader = isWin ? '"Windows"' : '"macOS"';
+  const userAgent = isWin
+    ? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+    : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+
   return {
     "Host": host,
     "Sec-Ch-Ua": '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
     "Sec-Ch-Ua-Mobile": "?0",
-    "Sec-Ch-Ua-Platform": '"macOS"',
+    "Sec-Ch-Ua-Platform": platformHeader,
     "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8",
     "Upgrade-Insecure-Requests": "1",
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "User-Agent": userAgent,
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
     "Sec-Fetch-Site": "same-origin",
     "Sec-Fetch-Mode": "navigate",
@@ -607,13 +619,14 @@ async function startAutomation(credentials, targetHost = 'exam-setu.dtu.ac.in', 
 
     callbacks.onStatusUpdate(`Now tracking ${trackedCourses.size} course(s). Monitoring for seat availability...`);
 
-    // Override onCourseRegistered to also fire a Mac desktop notification
+    // Override onCourseRegistered to also fire a desktop notification
     const originalOnCourseRegistered = callbacks.onCourseRegistered;
+    const notifIcon = require('path').join(__dirname, 'assets', process.platform === 'win32' ? 'dtulogo.ico' : 'dtulogo.png');
     callbacks.onCourseRegistered = (course) => {
       notifier.notify({
         title: 'Course Registered! 🎉',
         message: `${course.courseCode} (Slot: ${course.courseSlot}) successfully registered.`,
-        icon: require('path').join(__dirname, 'assets', 'dtulogo.png'),
+        icon: notifIcon,
         sound: true,
         wait: false,
       });

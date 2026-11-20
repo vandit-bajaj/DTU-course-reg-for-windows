@@ -9,8 +9,10 @@ test_e2e.js
 *.png
 !assets/dtulogo.png
 
-# Windows icon (not needed on Mac)
-assets/dtulogo.ico
+# Icons
+!assets/dtulogo.ico
+!assets/dtulogo.png
+!assets/dtulogo.icns
 
 # macOS junk
 .DS_Store

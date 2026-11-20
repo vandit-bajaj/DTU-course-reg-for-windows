@@ -2,16 +2,30 @@
 
 const { app, BrowserWindow, ipcMain, session } = require('electron');
 
+// Set Application User Model ID for Windows Toast notifications
+if (process.platform === 'win32') {
+  app.setAppUserModelId('com.vanditbajaj.dtu-course-registrar');
+}
+
 // Prevent Chromium automation flags from exposing webdriver to Cloudflare Turnstile
 app.commandLine.appendSwitch('disable-blink-features', 'AutomationControlled');
 
 const path = require('path');
+const fs = require('fs');
 const { execFile } = require('child_process');
 const notifier = require('node-notifier');
 const { startAutomation, stopAutomation, loginOnlyWithRetry } = require('./automation');
 
-const CHROME_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+// Cross-platform Chrome User-Agent matching the host OS to prevent Client Hints fingerprint mismatches
+const CHROME_USER_AGENT = process.platform === 'win32'
+  ? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+  : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 app.userAgentFallback = CHROME_USER_AGENT;
+
+// Resolve platform-appropriate app icon
+const APP_ICON = process.platform === 'win32'
+  ? path.join(__dirname, 'assets', 'dtulogo.ico')
+  : path.join(__dirname, 'assets', 'dtulogo.png');
 
 let win;
 let automationRunning = false;
@@ -22,20 +36,39 @@ let manualFillCredentialsTrigger = null;
 function playSound(type) {
   if (!soundAlertsEnabled) return;
 
-  // macOS system sound files (bells, chimes, fanfares, and alerts)
-  const soundMap = {
-    start: '/System/Library/Sounds/Tink.aiff',      // crisp bell ding when automation starts
-    login: '/System/Library/Sounds/Glass.aiff',     // resonant crystal bell on login success
-    success: '/System/Library/Sounds/Hero.aiff',    // victorious fanfare on course registered
-    error: '/System/Library/Sounds/Basso.aiff',     // deep tone when stopped by error
-    alert: '/System/Library/Sounds/Sosumi.aiff',    // alert chime on CAPTCHA / action required
-    stop: '/System/Library/Sounds/Pop.aiff',        // clean pop on user stop
-  };
-
-  const soundFile = soundMap[type] || soundMap.start;
-
   if (process.platform === 'darwin') {
+    // macOS system sound files (bells, chimes, fanfares, and alerts)
+    const soundMap = {
+      start: '/System/Library/Sounds/Tink.aiff',      // crisp bell ding when automation starts
+      login: '/System/Library/Sounds/Glass.aiff',     // resonant crystal bell on login success
+      success: '/System/Library/Sounds/Hero.aiff',    // victorious fanfare on course registered
+      error: '/System/Library/Sounds/Basso.aiff',     // deep tone when stopped by error
+      alert: '/System/Library/Sounds/Sosumi.aiff',    // alert chime on CAPTCHA / action required
+      stop: '/System/Library/Sounds/Pop.aiff',        // clean pop on user stop
+    };
+    const soundFile = soundMap[type] || soundMap.start;
     execFile('/usr/bin/afplay', [soundFile], () => {});
+  } else if (process.platform === 'win32') {
+    // Native Windows system sound files
+    const winMedia = path.join(process.env.SystemRoot || 'C:\\Windows', 'Media');
+    const winSoundMap = {
+      start: path.join(winMedia, 'Windows Ding.wav'),
+      login: path.join(winMedia, 'chimes.wav'),
+      success: path.join(winMedia, 'tada.wav'),
+      error: path.join(winMedia, 'chord.wav'),
+      alert: path.join(winMedia, 'notify.wav'),
+      stop: path.join(winMedia, 'Windows Navigation Start.wav'),
+    };
+    const wavFile = winSoundMap[type] || winSoundMap.start;
+    if (fs.existsSync(wavFile)) {
+      // Non-blocking PowerShell SoundPlayer execution
+      execFile('powershell', ['-NoProfile', '-NonInteractive', '-Command', `(New-Object System.Media.SoundPlayer '${wavFile.replace(/'/g, "''")}').PlaySync()`], () => {});
+    } else {
+      try {
+        const { shell } = require('electron');
+        shell.beep();
+      } catch (_) {}
+    }
   } else {
     try {
       const { shell } = require('electron');
@@ -53,7 +86,7 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
     },
-    icon: path.join(__dirname, 'assets', 'dtulogo.png'),
+    icon: APP_ICON,
   });
 
   win.loadFile('index.html');
@@ -151,7 +184,7 @@ ipcMain.handle('login-and-open-portal', async (event, data) => {
       nodeIntegration: false,
       contextIsolation: true,
     },
-    icon: path.join(__dirname, 'assets', 'dtulogo.png'),
+    icon: APP_ICON,
   });
   portalWin.webContents.setUserAgent(CHROME_USER_AGENT);
 
@@ -342,7 +375,7 @@ ipcMain.handle('login-and-open-portal', async (event, data) => {
         notifier.notify({
           title: 'ExamSetu Logged In! 🎉',
           message: 'Dashboard loaded! Click Course Registration and complete CAPTCHA manually.',
-          icon: path.join(__dirname, 'assets', 'dtulogo.png'),
+          icon: APP_ICON,
           sound: true,
           wait: false,
         });

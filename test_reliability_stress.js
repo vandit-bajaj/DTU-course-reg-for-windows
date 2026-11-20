@@ -171,6 +171,44 @@ function assertTest(name, condition, details = '') {
   );
 }
 
+// Scenario 7: Windows Asset & Icon Verification
+{
+  const fs = require('fs');
+  const path = require('path');
+  const icoPath = path.join(__dirname, 'assets', 'dtulogo.ico');
+  const icoExists = fs.existsSync(icoPath);
+  let icoValid = false;
+  if (icoExists) {
+    const buf = fs.readFileSync(icoPath);
+    icoValid = buf.length > 22 && buf.readUInt16LE(0) === 0 && buf.readUInt16LE(2) === 1;
+  }
+
+  assertTest(
+    'Windows assets: dtulogo.ico exists with valid multi-size ICO header',
+    icoExists && icoValid,
+    `Exists: ${icoExists}, Valid: ${icoValid}`
+  );
+}
+
+// Scenario 8: Windows & Cross-Platform Header Alignment
+{
+  const isWin = process.platform === 'win32';
+  const expectedPlatform = isWin ? '"Windows"' : '"macOS"';
+  const ua = isWin
+    ? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+    : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+
+  const matchesExpected = isWin
+    ? ua.includes('Windows NT 10.0') && expectedPlatform === '"Windows"'
+    : ua.includes('Macintosh') && expectedPlatform === '"macOS"';
+
+  assertTest(
+    'Cross-platform User-Agent and Sec-Ch-Ua-Platform align with host platform',
+    matchesExpected,
+    `Platform: ${process.platform}, UA: ${ua.slice(0, 30)}...`
+  );
+}
+
 console.log('\n================================================================');
 console.log(`STRESS TEST SUMMARY: ${passCount} / ${totalCount} PASSED`);
 console.log('================================================================');

@@ -12,5 +12,7 @@ exports.default = async function(context) {
       console.error(`[afterPack] Error during codesign:`, err);
       throw err;
     }
+  } else if (context.electronPlatformName === 'win32') {
+    console.log(`[afterPack] Windows pack ready: ${context.appOutDir}`);
   }
 };
