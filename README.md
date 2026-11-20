@@ -94,8 +94,8 @@ DTU Course Registrar bypasses the browser rendering pipeline entirely. It direct
 #### Option B: PowerShell / Command Prompt
 ```powershell
 # 1. Clone repository
-git clone https://github.com/vandit-bajaj/DTU-course-reg-for-mac.git
-cd DTU-course-reg-for-mac
+git clone https://github.com/vandit-bajaj/DTU-course-reg-for-windows.git
+cd DTU-course-reg-for-windows
 
 # 2. Install dependencies
 npm install
@@ -107,8 +107,8 @@ npm start
 ### macOS Quick Start
 ```bash
 # 1. Clone repository
-git clone https://github.com/vandit-bajaj/DTU-course-reg-for-mac.git
-cd DTU-course-reg-for-mac
+git clone https://github.com/vandit-bajaj/DTU-course-reg-for-windows.git
+cd DTU-course-reg-for-windows
 
 # 2. Install dependencies
 npm install

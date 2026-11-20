@@ -8,10 +8,10 @@
     "email": "vanditbajaj15@gmail.com",
     "url": "https://github.com/vandit-bajaj"
   },
-  "homepage": "https://github.com/vandit-bajaj/DTU-course-reg-for-mac",
+  "homepage": "https://github.com/vandit-bajaj/DTU-course-reg-for-windows",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vandit-bajaj/DTU-course-reg-for-mac.git"
+    "url": "https://github.com/vandit-bajaj/DTU-course-reg-for-windows.git"
   },
   "license": "MIT",
   "scripts": {
